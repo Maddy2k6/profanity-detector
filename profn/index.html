@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Profanity Detection System</title>
+
+
+<style>
+
+* {
+
+    box-sizing: border-box;
+
+}
+
+
+body {
+
+    margin: 0;
+
+    min-height: 100vh;
+
+    font-family:
+
+        Arial,
+
+        Helvetica,
+
+        sans-serif;
+
+
+    background:
+
+        #15181e;
+
+
+    color:
+
+        #f4f4f4;
+
+
+    display:
+
+        flex;
+
+
+    justify-content:
+
+        center;
+
+
+    align-items:
+
+        center;
+
+}
+
+
+.container {
+
+    width:
+
+        min(960px, 92vw);
+
+
+    text-align:
+
+        center;
+
+}
+
+
+h1 {
+
+    font-size:
+
+        34px;
+
+
+    letter-spacing:
+
+        1px;
+
+
+    margin:
+
+        0;
+
+}
+
+
+.subtitle {
+
+    margin-top:
+
+        10px;
+
+
+    margin-bottom:
+
+        38px;
+
+
+    color:
+
+        #aab4c4;
+
+
+    font-size:
+
+        16px;
+
+}
+
+
+.card {
+
+    background:
+
+        #222730;
+
+
+    border:
+
+        1px solid #353d4a;
+
+
+    border-radius:
+
+        20px;
+
+
+    padding:
+
+        50px 30px;
+
+
+    box-shadow:
+
+        0 15px 40px
+
+        rgba(0, 0, 0, 0.35);
+
+}
+
+
+.label {
+
+    color:
+
+        #aab4c4;
+
+
+    font-size:
+
+        15px;
+
+
+    font-weight:
+
+        bold;
+
+
+    text-transform:
+
+        uppercase;
+
+
+    letter-spacing:
+
+        3px;
+
+}
+
+
+.count {
+
+    font-size:
+
+        180px;
+
+
+    font-weight:
+
+        bold;
+
+
+    line-height:
+
+        1;
+
+
+    margin:
+
+        30px 0;
+
+
+    color:
+
+        #f4f4f4;
+
+}
+
+
+.status {
+
+    display:
+
+        inline-block;
+
+
+    padding:
+
+        14px 24px;
+
+
+    border-radius:
+
+        30px;
+
+
+    font-weight:
+
+        bold;
+
+
+    background:
+
+        #2c3340;
+
+
+    color:
+
+        #ffffff;
+
+}
+
+
+.info {
+
+    margin-top:
+
+        30px;
+
+
+    color:
+
+        #aab4c4;
+
+
+    font-size:
+
+        15px;
+
+}
+
+
+.connection {
+
+    margin-top:
+
+        25px;
+
+
+    font-size:
+
+        14px;
+
+
+    color:
+
+        #f87171;
+
+}
+
+
+#resetButton {
+
+    margin-top:
+
+        28px;
+
+
+    padding:
+
+        13px 28px;
+
+
+    border:
+
+        1px solid #4a5568;
+
+
+    border-radius:
+
+        8px;
+
+
+    background:
+
+        #2c3340;
+
+
+    color:
+
+        white;
+
+
+    font-weight:
+
+        bold;
+
+
+    letter-spacing:
+
+        1px;
+
+
+    cursor:
+
+        pointer;
+
+
+    transition:
+
+        0.2s;
+
+}
+
+
+#resetButton:hover {
+
+    background:
+
+        #3a4352;
+
+
+    transform:
+
+        translateY(-2px);
+
+}
+
+
+#resetButton:active {
+
+    transform:
+
+        scale(0.97);
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <h1>
+
+        PROFANITY DETECTION SYSTEM
+
+    </h1>
+
+
+    <div class="subtitle">
+
+        Live Curse Detection Counter
+
+    </div>
+
+
+    <div class="card">
+
+
+        <div class="label">
+
+            Total Curses Detected
+
+        </div>
+
+
+        <div
+
+            class="count"
+
+            id="curseCount"
+
+        >
+
+            0
+
+        </div>
+
+
+        <div
+
+            class="status"
+
+            id="status"
+
+        >
+
+            WAITING FOR DETECTION
+
+        </div>
+
+
+        <div class="info">
+
+            The counter updates automatically
+            when the system detects profanity.
+
+        </div>
+
+
+        <div
+
+            class="connection"
+
+            id="connection"
+
+        >
+
+            ● CONNECTING...
+
+        </div>
+
+
+        <button
+
+            id="resetButton"
+
+            onclick="resetSession()"
+
+        >
+
+            RESET SESSION
+
+        </button>
+
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+// =====================================
+// UPDATE DASHBOARD
+// =====================================
+
+async function updateDashboard() {
+
+    try {
+
+
+        const response =
+
+            await fetch(
+
+                "/api/status",
+
+                {
+
+                    cache:
+
+                        "no-store"
+
+                }
+
+            );
+
+
+        if (
+
+            !response.ok
+
+        ) {
+
+            throw new Error(
+
+                "Could not connect"
+
+            );
+
+        }
+
+
+        const data =
+
+            await response.json();
+
+
+        // =================================
+        // UPDATE COUNT
+        // =================================
+
+        document
+
+            .getElementById(
+
+                "curseCount"
+
+            )
+
+            .textContent =
+
+                data.found;
+
+
+        // =================================
+        // UPDATE STATUS
+        // =================================
+
+        const status =
+
+            document
+
+                .getElementById(
+
+                    "status"
+
+                );
+
+
+        if (
+
+            data.latest_state === "FOUND"
+
+        ) {
+
+
+            status.textContent =
+
+                "⚠ CURSE DETECTED";
+
+
+            status.style.background =
+
+                "#5b2020";
+
+
+            status.style.color =
+
+                "#ffb4b4";
+
+        }
+
+
+        else if (
+
+            data.latest_state === "NOTFOUND"
+
+        ) {
+
+
+            status.textContent =
+
+                "✓ NO CURSE DETECTED";
+
+
+            status.style.background =
+
+                "#1d4d35";
+
+
+            status.style.color =
+
+                "#a7f3c3";
+
+        }
+
+
+        else {
+
+
+            status.textContent =
+
+                "WAITING FOR DETECTION";
+
+
+            status.style.background =
+
+                "#2c3340";
+
+
+            status.style.color =
+
+                "#ffffff";
+
+        }
+
+
+        // =================================
+        // CONNECTION STATUS
+        // =================================
+
+        const connection =
+
+            document
+
+                .getElementById(
+
+                    "connection"
+
+                );
+
+
+        connection.textContent =
+
+            "● RECEIVER ONLINE";
+
+
+        connection.style.color =
+
+            "#86efac";
+
+    }
+
+
+    catch (
+
+        error
+
+    ) {
+
+
+        console.error(
+
+            error
+
+        );
+
+
+        const connection =
+
+            document
+
+                .getElementById(
+
+                    "connection"
+
+                );
+
+
+        connection.textContent =
+
+            "● RECEIVER OFFLINE";
+
+
+        connection.style.color =
+
+            "#f87171";
+
+    }
+
+}
+
+
+// =====================================
+// RESET SESSION
+// =====================================
+
+async function resetSession() {
+
+
+    const confirmed =
+
+        confirm(
+
+            "Reset the profanity count?"
+
+        );
+
+
+    if (
+
+        !confirmed
+
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+
+        const response =
+
+            await fetch(
+
+                "/api/reset",
+
+                {
+
+                    method:
+
+                        "POST"
+
+                }
+
+            );
+
+
+        const data =
+
+            await response.json();
+
+
+        if (
+
+            !data.success
+
+        ) {
+
+
+            throw new Error(
+
+                "Reset failed"
+
+            );
+
+        }
+
+
+        // Immediately reset display
+
+        document
+
+            .getElementById(
+
+                "curseCount"
+
+            )
+
+            .textContent =
+
+                "0";
+
+
+        document
+
+            .getElementById(
+
+                "status"
+
+            )
+
+            .textContent =
+
+                "WAITING FOR DETECTION";
+
+
+        // Refresh dashboard
+
+        updateDashboard();
+
+
+        alert(
+
+            data.esp32_reset
+
+                ?
+
+                "Dashboard and ESP32 counter reset!"
+
+                :
+
+                "Dashboard reset. ESP32 could not be reached."
+
+        );
+
+
+    }
+
+
+    catch (
+
+        error
+
+    ) {
+
+
+        console.error(
+
+            error
+
+        );
+
+
+        alert(
+
+            "Could not reset the system."
+
+        );
+
+    }
+
+}
+
+
+// =====================================
+// START DASHBOARD
+// =====================================
+
+updateDashboard();
+
+
+setInterval(
+
+    updateDashboard,
+
+    1000
+
+);
+
+
+</script>
+
+
+</body>
+
+</html>
